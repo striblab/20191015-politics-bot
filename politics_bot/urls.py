@@ -5,5 +5,5 @@ from candidates.views import SlackAPIResponderView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('slack-listener/', SlackAPIResponderView.as_view())
+    path('politics-bot/slack-listener/', SlackAPIResponderView.as_view())
 ]
