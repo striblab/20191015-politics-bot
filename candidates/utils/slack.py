@@ -6,7 +6,7 @@ def send_slack_message(text, channel):
     endpoint = 'https://slack.com/api/chat.postMessage'
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': f'Bearer {settings.SLACK_AUTH_TOKEN}'
+        'Authorization': 'Bearer {}'.format(settings.SLACK_AUTH_TOKEN)
     }
     payload = {
         'text': text,
