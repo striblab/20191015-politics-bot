@@ -20,7 +20,7 @@ class SlackAPIResponderView(View):
 
     def post(self, request):
         # print(request.body)
-        json_params = json.loads(request.body)
+        json_params = json.loads(request.body.decode('utf-8'))
 
         # Slack events API url verification
         if json_params['type'] == 'url_verification':
