@@ -2,7 +2,7 @@ import requests
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
-from candidates.models import NewCandidate
+from candidates.models import NewCandidate, NewLobbyist
 
 class Command(BaseCommand):
     help = 'Checks for new candidates, imports.'
@@ -28,13 +28,13 @@ class Command(BaseCommand):
             return ''
         return input_str
 
-    def handle(self, *args, **options):
-        response = requests.post('https://cfb.mn.gov/reports/api/', data=self.data)
+    def get_recent_candidates(self):
+        response = requests.post(self.candidate_api, data=self.data)
         if response.status_code == 200:
             candidate_list = response.json()['data']
             for candidate in candidate_list.items():
                 candidate_data = candidate[1][0]
-                # print(candidate[1][0])
+
                 # This is a small dataset, so update or create based on candidate ID
                 obj, created = NewCandidate.objects.update_or_create(
                     entity_id=candidate_data[1],
@@ -47,3 +47,30 @@ class Command(BaseCommand):
                         'termination_date': candidate_data[6],
                     },
                 )
+
+    def get_recent_lobbyists(self):
+        lobbyist_json = self.data.copy()
+        lobbyist_json['data[action]'] = 'recent-lobbyist-registrations'
+
+        response = requests.post(self.candidate_api, data=lobbyist_json)
+        if response.status_code == 200:
+            lobbyist_list = response.json()['data']
+            for lobbyist in lobbyist_list.items():
+                lobbyist_data = lobbyist[1][0]
+
+                # This is a small dataset, so update or create based on candidate ID
+                obj, created = NewLobbyist.objects.update_or_create(
+                    lobbyist_id=lobbyist_data[1],
+                    defaults={
+                        'lobbyist_full_name': lobbyist_data[0].strip(),
+                        'association_full_name': lobbyist_data[2],
+                        'association_entity_id': lobbyist_data[3],
+                        'registration_date': self.strip_blank_time(lobbyist_data[4]),
+                        'termination_date': lobbyist_data[5],
+                    },
+                )
+
+
+    def handle(self, *args, **options):
+        self.get_recent_candidates()
+        self.get_recent_lobbyists()

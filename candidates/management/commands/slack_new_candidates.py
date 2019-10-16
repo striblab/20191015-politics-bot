@@ -29,6 +29,5 @@ class Command(BaseCommand):
                 response_text += self.format_candidate(uc)
 
             bool_message_sent = send_slack_message(response_text, '#polgov')
-            print(bool_message_sent)
             if bool_message_sent:
                 unslacked_candidates.update(bool_alert_sent=True)

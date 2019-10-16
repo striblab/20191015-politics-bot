@@ -10,5 +10,6 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        call_command('get_recent_candidates', verbosity=0)
+        call_command('get_recent_filings', verbosity=0)
         call_command('slack_new_candidates', verbosity=0)
+        call_command('slack_new_lobbyists', verbosity=0)
