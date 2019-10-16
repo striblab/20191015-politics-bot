@@ -40,7 +40,7 @@ class SlackAPIResponderView(View):
                 bot_message = False
 
             if not bot_message and "tell me a joke" in event["text"].lower():
-                response_text = f"(Disabled after this.) Hello <@{event['user']}>! Knock, knock..."
+                response_text = "(Disabled after this.) Hello <@{user}>! Knock, knock...".format(**event)
 
         if response_text:
             send_slack_message(response_text, "#robot-dojo")

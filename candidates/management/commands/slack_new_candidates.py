@@ -15,16 +15,16 @@ class Command(BaseCommand):
 
     def format_candidate(self, candidate_inst):
         c = candidate_inst.__dict__
-        c["district_clean"] = f' {c["district"]}'.format(c) if c["district"] != '' else ''
+        c["district_clean"] = ' {district}'.format(c) if c["district"] != '' else ''
         c["registration_date_clean"] = datetime.strftime(c["registration_date"], '%a, %b %-d, %Y')
-        c["cand_link"] = f'https://cfb.mn.gov/reports-and-data/viewers/campaign-finance/candidates/{c["entity_id"]}/'
+        c["cand_link"] = 'https://cfb.mn.gov/reports-and-data/viewers/campaign-finance/candidates/{entity_id}/'
 
-        return f'\n\n{c["office_sought"]}{c["district_clean"]}: {c["entity_full_name"]} ({c["party_name"]}) {c["registration_date_clean"]}\n{c["cand_link"]}'
+        return '\n\n{office_sought}{district_clean}: {entity_full_name} ({party_name}) {registration_date_clean}\n{cand_link}'.format(c)
 
     def handle(self, *args, **options):
         unslacked_candidates = NewCandidate.objects.filter(bool_alert_sent=False)
         if unslacked_candidates.count() > 0:
-            response_text = f"You heard it here first: there's {unslacked_candidates.count()} new candidates on the CFB site."
+            response_text = "You heard it here first: there's {} new candidates on the CFB site.".format(unslacked_candidates.count())
             for uc in unslacked_candidates:
                 response_text += self.format_candidate(uc)
 
