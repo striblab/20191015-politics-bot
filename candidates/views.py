@@ -5,7 +5,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from candidates.utils.slack import send_slack_message
+from candidates.utils.slack import send_slack_message, verify_slack_request
 
 
 class SlackAPIResponderView(View):
@@ -19,31 +19,35 @@ class SlackAPIResponderView(View):
         return HttpResponse('GET is not really a thing around here. Try POST.')
 
     def post(self, request):
-        # print(request.body)
-        json_params = json.loads(request.body.decode('utf-8'))
+        # Check if this is a geniune Slack request
+        if not verify_slack_request(request):
+            return HttpResponse('This does not appear to be a real Slack request.\n')
+        else:
+            # print(request.body)
+            json_params = json.loads(request.body.decode('utf-8'))
 
-        # Slack events API url verification
-        if json_params['type'] == 'url_verification':
-            return HttpResponse(json_params['challenge'])
+            # Slack events API url verification
+            if json_params['type'] == 'url_verification':
+                return HttpResponse(json_params['challenge'])
 
-        # For now pretty much everything else comes through the event dict.
-        event = json_params['event']
-        response_text = None
+            # For now pretty much everything else comes through the event dict.
+            event = json_params['event']
+            response_text = None
 
-        # App mentions
-        if event['type'] == "app_mention":
-            try:
-                # Don't get high on your own supply, i.e. make the bot respond to itself.
-                if event['subtype'] == 'bot_message':
-                    bot_message = True
-            except:
-                bot_message = False
+            # App mentions
+            if event['type'] == "app_mention":
+                try:
+                    # Don't get high on your own supply, i.e. make the bot respond to itself.
+                    if event['subtype'] == 'bot_message':
+                        bot_message = True
+                except:
+                    bot_message = False
 
-            if not bot_message and "tell me a joke" in event["text"].lower():
-                response_text = "(Disabled after this.) Hello <@{user}>! Knock, knock...".format(**event)
+                if not bot_message and "tell me a joke" in event["text"].lower():
+                    response_text = "(Disabled after this.) Hello <@{user}>! Knock, knock...".format(**event)
 
-        if response_text:
-            send_slack_message(response_text, "#robot-dojo")
+            if response_text:
+                send_slack_message(response_text, "#robot-dojo")
 
         return HttpResponse('Generic POST POST POST.\n')
 
