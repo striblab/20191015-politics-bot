@@ -24,7 +24,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         unslacked_candidates = NewCandidate.objects.filter(bool_alert_sent=False)
         if unslacked_candidates.count() > 0:
-            response_text = "You heard it here first: there's {} new candidates on the CFB site.".format(unslacked_candidates.count())
+            if unslacked_candidates.count() == 1:
+                response_text = "You heard it here first: there's a new candidate on the CFB site."
+            else:
+                response_text = "You heard it here first: there are {} new candidates on the CFB site.".format(unslacked_candidates.count())
+
             for uc in unslacked_candidates:
                 response_text += self.format_candidate(uc)
 
