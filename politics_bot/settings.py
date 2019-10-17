@@ -25,13 +25,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['1723b1b1.ngrok.io']
+ALLOWED_HOSTS = []
+# Set to false in local_settings.py to debug slack interactions with curl or similar
+REQUIRE_AUTHED_SLACK_REQUESTS = True
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'candidates.apps.CandidatesConfig',
+    'jokes.apps.JokesConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',

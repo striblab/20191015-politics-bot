@@ -3,9 +3,11 @@ import time
 import hmac
 import hashlib
 import requests
+
 from django.conf import settings
 
-def send_slack_message(text, channel):
+
+def send_slack_message(text, channel="#robot-dojo"):
     endpoint = 'https://slack.com/api/chat.postMessage'
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
@@ -20,25 +22,29 @@ def send_slack_message(text, channel):
         return True
     return False
 
+
 def verify_slack_request(request):
-    try:
-        timestamp = request.headers['X-Slack-Request-Timestamp']
-        print(timestamp)
-        slack_signature = request.headers['X-Slack-Signature']
-    except:
+    if settings.REQUIRE_AUTHED_SLACK_REQUESTS:
+        try:
+            timestamp = request.headers['X-Slack-Request-Timestamp']
+            print(timestamp)
+            slack_signature = request.headers['X-Slack-Signature']
+        except:
+            return False
+
+        if abs(time.time() - int(timestamp)) > 60 * 5:
+             # The request timestamp is more than five minutes from local time. It could be a replay attack, so let's ignore it.
+            return False
+
+        request_body = request.body.decode('utf-8')
+        sig_basestring = 'v0:' + timestamp + ':' + request_body
+
+        hash = hmac.new(settings.SLACK_SIGNING_SECRET.encode('utf-8'), sig_basestring.encode('utf-8'), hashlib.sha256).hexdigest()
+        my_signature = 'v0=' + hash
+
+        if my_signature == slack_signature:
+            # hooray, the request came from Slack!
+            return True
         return False
-
-    if abs(time.time() - int(timestamp)) > 60 * 5:
-         # The request timestamp is more than five minutes from local time. It could be a replay attack, so let's ignore it.
-        return False
-
-    request_body = request.body.decode('utf-8')
-    sig_basestring = 'v0:' + timestamp + ':' + request_body
-
-    hash = hmac.new(settings.SLACK_SIGNING_SECRET.encode('utf-8'), sig_basestring.encode('utf-8'), hashlib.sha256).hexdigest()
-    my_signature = 'v0=' + hash
-
-    if my_signature == slack_signature:
-        # hooray, the request came from Slack!
+    else:
         return True
-    return False

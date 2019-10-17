@@ -15,11 +15,11 @@ class Command(BaseCommand):
 
     def format_candidate(self, candidate_inst):
         c = candidate_inst.__dict__
-        c["district_clean"] = ' {district}'.format(c) if c["district"] != '' else ''
+        c["district_clean"] = ' {district}'.format(**c) if c["district"] != '' else ''
         c["registration_date_clean"] = datetime.strftime(c["registration_date"], '%a, %b %-d, %Y')
         c["cand_link"] = 'https://cfb.mn.gov/reports-and-data/viewers/campaign-finance/candidates/{entity_id}/'
 
-        return '\n\n{office_sought}{district_clean}: {entity_full_name} ({party_name}) {registration_date_clean}\n{cand_link}'.format(c)
+        return '\n\n{office_sought}{district_clean}: {entity_full_name} ({party_name}) {registration_date_clean}\n{cand_link}'.format(**c)
 
     def handle(self, *args, **options):
         unslacked_candidates = NewCandidate.objects.filter(bool_alert_sent=False)

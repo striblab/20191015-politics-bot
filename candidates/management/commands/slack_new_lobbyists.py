@@ -16,9 +16,9 @@ class Command(BaseCommand):
     def format_lobbyist(self, lobbyist_inst):
         c = lobbyist_inst.__dict__
         c["registration_date_clean"] = datetime.strftime(c["registration_date"], '%a, %b %-d, %Y')
-        c["l_link"] = 'https://cfb.mn.gov/reports-and-data/viewers/lobbying/lobbyists/{lobbyist_id}/'.format(c)
+        c["l_link"] = 'https://cfb.mn.gov/reports-and-data/viewers/lobbying/lobbyists/{lobbyist_id}/'.format(**c)
 
-        return '\n\n{lobbyist_full_name}: {association_full_name} ({registration_date_clean})\n{l_link}'.format(c)
+        return '\n\n{lobbyist_full_name}: {association_full_name} ({registration_date_clean})\n{l_link}'.format(**c)
 
     def handle(self, *args, **options):
         unslacked_lobbyists = NewLobbyist.objects.filter(bool_alert_sent=False)
