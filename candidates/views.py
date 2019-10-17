@@ -10,7 +10,7 @@ from jokes.utils.joke_methods import is_this_a_joke
 
 
 class SlackAPIResponderView(View):
-    ''' How to receive and respond to interactive Slack traffic. '''
+    ''' Main endpoint for receiving interactive Slack traffic. '''
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return super(SlackAPIResponderView, self).dispatch(request, *args, **kwargs)
@@ -36,6 +36,7 @@ class SlackAPIResponderView(View):
             event = json_params['event']
             response_text = None
 
+            # Is this a joke?
             response_text, channel = is_this_a_joke(event)
 
             if response_text:
