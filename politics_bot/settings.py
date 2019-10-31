@@ -34,6 +34,7 @@ REQUIRE_AUTHED_SLACK_REQUESTS = True
 
 INSTALLED_APPS = [
     'candidates.apps.CandidatesConfig',
+    'licenses.apps.LicensesConfig',
     'jokes.apps.JokesConfig',
 
     'django.contrib.admin',
