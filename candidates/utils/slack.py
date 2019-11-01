@@ -8,6 +8,7 @@ from django.conf import settings
 
 
 def send_slack_message(text, channel="#robot-dojo"):
+    '''needs to be deprecated, you gotta fix the jokes first'''
     endpoint = 'https://slack.com/api/chat.postMessage'
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
@@ -21,6 +22,33 @@ def send_slack_message(text, channel="#robot-dojo"):
     if r.status_code == 200:
         return True
     return False
+
+def send_slack_message_blocks(blocks, channel="#robot-dojo"):
+    endpoint = 'https://slack.com/api/chat.postMessage'
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Bearer {}'.format(settings.SLACK_AUTH_TOKEN)
+    }
+    payload = {
+        # 'text': text,
+        'blocks': blocks,
+        'channel': channel
+    }
+    print(payload)
+    r = requests.post(endpoint, data=json.dumps(payload), headers=headers)
+    print(r.content)
+    if r.status_code == 200:
+        return True
+    return False
+
+def build_slack_mrkdwn_block(text):
+    return {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": text
+        }
+    }
 
 
 def verify_slack_request(request):

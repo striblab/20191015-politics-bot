@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 from django.core.management.base import BaseCommand, CommandError
-#from candidates.models import NewCandidate, NewLobbyist
+from licenses.models import AgendaItem
 
 class Command(BaseCommand):
     help = 'Checks for new license/permit applications, imports.'
@@ -16,9 +16,9 @@ class Command(BaseCommand):
 
     agenda_record_root_past = 'https://lims.minneapolismn.gov/MarkedAgenda'
 
-    COMMITTEE_NAMES = ['Committee of the Whole', 'Economic Development & Regulatory Services Committee']
+    COMMITTEE_NAMES = ['Economic Development & Regulatory Services Committee']
 
-    INTERESTING_PHRASES = [r'brewery', r'restaurant', r'liquor license']
+    INTERESTING_PHRASES = ['restaurant', r'brewery', r'distillery', r'cafe', r'liquor', r'bar', r'beer', r'eatery', r'coffee shop', r'bakery', r'butcher', r'co-op', r'grocery', r'deli']
 
     def add_arguments(self, parser):
         # parser.add_argument('poll_ids', nargs='+', type=int)
@@ -29,15 +29,20 @@ class Command(BaseCommand):
         agendas = json.loads(requests.get(self.api_endpoint_past).content)
         print(agendas)
         for a in agendas:
-            # print(a['Id'], a['CommitteeName'])
             commitee_name = a['CommitteeName']
             if commitee_name in self.COMMITTEE_NAMES:
-                agenda_link = os.path.join(self.agenda_record_root_past, a['Abbreviation'], str(a['AgendaId']))
-                a.update({'agenda_link': agenda_link})
-                # print(commitee_name, agenda_link)
-                agenda_results.append(a)
-                # https://lims.minneapolismn.gov/MarkedAgenda/ZP/1199
+                if a['AgendaId'] != "0":  # Ignore if no agenda yet
+                    agenda_link = os.path.join(self.agenda_record_root_past, a['Abbreviation'], str(a['AgendaId']))
+                    a.update({'agenda_link': agenda_link})
+                    agenda_results.append(a)
         return agenda_results
+
+    def strip_line_breaks(self, input_str):
+        input_str = re.sub(r'\n{2,}', '\n', input_str).strip()
+        input_str = re.sub(r'\n\s{2,}', '\n', input_str)
+        input_str = input_str.replace('\nThis link open a new window', ' ')
+        return input_str
+
 
     def find_agenda_items(self, meeting_obj):
         agenda = requests.get(meeting_obj['agenda_link']).content
@@ -50,10 +55,7 @@ class Command(BaseCommand):
 
             items = heading.parent.parent.find_next_sibling().find('ol')
             for item in items.find_all('li', recursive=False):
-                item_text = item.text.strip()
-                item_text = re.sub(r'\n{2,}', '\n', item_text)
-                item_text = re.sub(r'\n\s{2,}', '\n', item_text)
-                item_text = item_text.replace('\nThis link open a new window', ' ')
+                item_text = self.strip_line_breaks(item.text.strip())
 
                 item_title = item.find_all('span')[1].text
                 item_link = item.find('a')['href']
@@ -61,11 +63,27 @@ class Command(BaseCommand):
                 # Check for interesting phrases
                 for regex in self.INTERESTING_PHRASES:
                     if re.search(regex, item_text, re.IGNORECASE):
+
+                        # check for text blob description
+                        try:
+                            item_description = self.strip_line_breaks(item.find('div', class_="markedAgenda nopadding print_row").text)
+                        except:
+                            # list type items
+                            item_description = ''
+                            # item_description = item.find_all('span')[1].text
+                            list_items = item.find('ol').find_all('li')
+                            for index, li in enumerate(list_items):
+                                item_description += '\n    {}. {}'.format(str(index+1), self.strip_line_breaks(li.text))
+
+                        action_taken = item.find('b').text.replace('Action Taken: ', '').strip()
+
                         report_back = {
                             'item_title': item_title,
                             'item_link': item_link,
-                            'item_text': item_text,
-                            'action_type': action_type
+                            # 'item_text': item_text,
+                            'item_description': item_description,
+                            'action_type': action_type,
+                            'action_taken': action_taken
                         }
                         # TODO: send back a nicely formatted list view
                         if report_back not in interesting_items:
@@ -73,13 +91,29 @@ class Command(BaseCommand):
 
         return interesting_items
 
-    def handle(self, *args, **options):
-        # agendas = self.get_agenda_links()
+    def load_item(self, meeting, item):
+        # This is a small dataset, so update or create based on meeting link and item title
+        obj, created = AgendaItem.objects.update_or_create(
+            meeting_link=meeting['agenda_link'],
+            item_title=item['item_title'],
+            defaults={
+                'committee_name': meeting['CommitteeName'],
+                'meeting_id': meeting['AgendaId'],
+                'item_link': item['item_link'],
+                'item_description': item['item_description'],
+                'action_type': item['action_type'],
+                'action_taken': item['action_taken'],
+            },
+        )
 
-        # Feed it a manual agenda
-        agendas = [
-            {'agenda_link': 'https://lims.minneapolismn.gov/MarkedAgenda/EDRS/1188'}
-        ]
+    def handle(self, *args, **options):
+        agendas = self.get_agenda_links()
+
+        # # Feed it a manual agenda
+        # agendas = [
+        #     {'agenda_link': 'https://lims.minneapolismn.gov/MarkedAgenda/EDRS/1188'}
+        # ]
         for a in agendas:
             matching_items = self.find_agenda_items(a)
-            print(matching_items)
+            for mi in matching_items:
+                self.load_item(a, mi)
