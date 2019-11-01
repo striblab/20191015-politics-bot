@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 from candidates.models import NewCandidate
-from candidates.utils.slack import send_slack_message_blocks, build_slack_mrkdwn_block
+from candidates.utils.slack import send_slack_message, build_slack_mrkdwn_block
 
 class Command(BaseCommand):
     help = 'Checks for candidates that have not been slacked and Slacks them.'

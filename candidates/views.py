@@ -5,7 +5,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from candidates.utils.slack import send_slack_message, verify_slack_request
+from candidates.utils.slack import send_slack_message, build_slack_mrkdwn_block, verify_slack_request
 from jokes.utils.joke_methods import is_this_a_joke
 
 
@@ -40,7 +40,8 @@ class SlackAPIResponderView(View):
             response_text, channel = is_this_a_joke(event)
 
             if response_text:
-                send_slack_message(response_text, channel)
+                blocks = [build_slack_mrkdwn_block(response_text)]
+                send_slack_message(blocks, channel)
                 return HttpResponse('{}\n'.format(response_text))
 
         return HttpResponse('Generic POST POST POST.\n')

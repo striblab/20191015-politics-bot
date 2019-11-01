@@ -7,23 +7,23 @@ import requests
 from django.conf import settings
 
 
-def send_slack_message(text, channel="#robot-dojo"):
-    '''needs to be deprecated, you gotta fix the jokes first'''
-    endpoint = 'https://slack.com/api/chat.postMessage'
-    headers = {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Bearer {}'.format(settings.SLACK_AUTH_TOKEN)
-    }
-    payload = {
-        'text': text,
-        'channel': channel
-    }
-    r = requests.post(endpoint, data=json.dumps(payload), headers=headers)
-    if r.status_code == 200:
-        return True
-    return False
+# def send_slack_message(text, channel="#robot-dojo"):
+#     '''needs to be deprecated, you gotta fix the jokes first'''
+#     endpoint = 'https://slack.com/api/chat.postMessage'
+#     headers = {
+#         'Content-Type': 'application/json; charset=utf-8',
+#         'Authorization': 'Bearer {}'.format(settings.SLACK_AUTH_TOKEN)
+#     }
+#     payload = {
+#         'text': text,
+#         'channel': channel
+#     }
+#     r = requests.post(endpoint, data=json.dumps(payload), headers=headers)
+#     if r.status_code == 200:
+#         return True
+#     return False
 
-def send_slack_message_blocks(blocks, channel="#robot-dojo"):
+def send_slack_message(blocks, channel="#robot-dojo"):
     endpoint = 'https://slack.com/api/chat.postMessage'
     headers = {
         'Content-Type': 'application/json; charset=utf-8',

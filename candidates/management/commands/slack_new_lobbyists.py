@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 from candidates.models import NewLobbyist
-from candidates.utils.slack import send_slack_message_blocks, build_slack_mrkdwn_block
+from candidates.utils.slack import send_slack_message, build_slack_mrkdwn_block
 
 class Command(BaseCommand):
     help = 'Checks for lobbyists that have not been slacked and Slacks them.'
@@ -34,6 +34,6 @@ class Command(BaseCommand):
                 blocks.append(build_slack_mrkdwn_block(self.format_lobbyist(uc)))
                 blocks.append({"type": "divider"})
 
-            bool_message_sent = send_slack_message_blocks(blocks, '#polgov')
+            bool_message_sent = send_slack_message(blocks, '#polgov')
             if bool_message_sent:
                 unslacked_lobbyists.update(bool_alert_sent=True)

@@ -4,7 +4,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 from licenses.models import AgendaItem
-from candidates.utils.slack import send_slack_message_blocks, build_slack_mrkdwn_block
+from candidates.utils.slack import send_slack_message, build_slack_mrkdwn_block
 
 class Command(BaseCommand):
     help = 'Checks for agenda items that have not been slacked and Slacks them.'
@@ -37,7 +37,7 @@ class Command(BaseCommand):
                     blocks.append(build_slack_mrkdwn_block(self.format_item(uc)))
                     blocks.append({"type": "divider"})
 
-            # bool_message_sent = send_slack_message_blocks(blocks, '#foodtips')
-            bool_message_sent = send_slack_message_blocks(blocks)  # dojo
+            # bool_message_sent = send_slack_message(blocks, '#foodtips')
+            bool_message_sent = send_slack_message(blocks)  # dojo
             if bool_message_sent:
                 unslacked_items.update(bool_alert_sent=True)
