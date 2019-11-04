@@ -27,3 +27,7 @@ The bot also can tell or respond to knock-knock jokes through the Slack Events A
 All incoming requests from Slack are handled by the `SlackAPIResponderView` in `candidates.views`. The logic for handling jokes is handled by methods in `jokes.utils.joke_methods`. When a request is sent to the API endpoint from Slack, the `is_this_a_joke` method determines if any joke-related reply should be generated, and if so will create temporary `JokeTeller` or `JokeResponder` model instances to keep multistep jokes on track. If a response is returned, the main `SlackAPIResponderView` will send the actual Slack message.
 
 If you want to add a new interactive chat module, it should follow a similar pattern of taking the request, determining if a response is needed, and returning either a text response or `False` to `SlackAPIResponderView`.
+
+# To build a (Dockerized) website:
+docker build -t politics_bot .
+docker run --detach=false --publish=8000:80 --env-file .env.prod politics_bot

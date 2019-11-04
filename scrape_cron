@@ -1,0 +1,2 @@
+2 * * * * python /srv/manage.py update_lists
+#*/1 * * * * echo "Hello world" >> /var/log/cron.log

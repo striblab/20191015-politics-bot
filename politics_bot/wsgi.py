@@ -11,8 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-#os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'politics_bot.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'politics_bot.settings')
 # For serving multiple apps over Apache
-os.environ["DJANGO_SETTINGS_MODULE"] = "politics_bot.settings"
+# os.environ["DJANGO_SETTINGS_MODULE"] = "politics_bot.settings"
 
 application = get_wsgi_application()
