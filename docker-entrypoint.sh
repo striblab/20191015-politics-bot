@@ -1,7 +1,5 @@
 #!/bin/bash
 python manage.py migrate        # Apply database migrations
-echo Starting cron
-cron start
 # python manage.py collectstatic --clear --noinput # clearstatic files
 # python manage.py collectstatic --noinput  # collect static files
 # Prepare log files and start outputting logs to stdout

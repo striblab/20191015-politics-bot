@@ -22,27 +22,6 @@ ENV DOCKYARD_SRVPROJ=$DOCKYARD_SRVHOME/$DOCKYARD_SRC
 # Update the default application repository sources list
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get install -y nginx
-RUN apt-get install -y cron
-
-##############
-# CRON STUFF #
-##############
-
-# Copy hello-cron file to the cron.d directory
-COPY scrape_cron /etc/cron.d/scrape_cron
-
-# Give execution rights on the cron job
-RUN chmod 0644 /etc/cron.d/scrape_cron
-
-# Apply cron job
-RUN crontab /etc/cron.d/scrape_cron
-
-# Create the log file to be able to run tail
-RUN touch /var/log/cron.log
-
-# Run the command on container startup
-#CMD cron && tail -f /var/log/cron.log
-#CMD ["cron", "-f"]
 
 # Create application subdirectories
 WORKDIR $DOCKYARD_SRVHOME
