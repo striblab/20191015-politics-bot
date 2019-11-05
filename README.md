@@ -31,3 +31,8 @@ If you want to add a new interactive chat module, it should follow a similar pat
 # To build a (Dockerized) website:
 docker build -t politics_bot .
 docker run --detach=false --publish=8000:80 --env-file .env.prod politics_bot
+
+# To build a scraper task
+# This one has a specified dockerfile with different stuff
+docker build -t politics_bot_scrape -f Dockerfile.scrape .
+docker run --detach=false --env-file .env.prod politics_bot_scrape
