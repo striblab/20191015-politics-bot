@@ -27,7 +27,7 @@ class Command(BaseCommand):
     def get_agenda_links(self):
         agenda_results= []
         agendas = json.loads(requests.get(self.api_endpoint_past).content)
-        print(agendas)
+        # print(agendas)
         for a in agendas:
             commitee_name = a['CommitteeName']
             if commitee_name in self.COMMITTEE_NAMES:

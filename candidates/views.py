@@ -28,7 +28,7 @@ class SlackAPIResponderView(View):
             json_params = json.loads(request.body.decode('utf-8'))
 
             # Slack events API url verification
-            if type in json_params:
+            if 'type' in json_params:
                 if json_params['type'] == 'url_verification':
                     return HttpResponse(json_params['challenge'])
 
