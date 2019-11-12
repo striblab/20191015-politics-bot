@@ -37,7 +37,7 @@ class Command(BaseCommand):
                     blocks.append(build_slack_mrkdwn_block(self.format_item(uc)))
                     blocks.append({"type": "divider"})
 
-            # bool_message_sent = send_slack_message(blocks, '#foodtips')
-            bool_message_sent = send_slack_message(blocks)  # dojo
+            bool_message_sent = send_slack_message(blocks, '#foodtips')
+            # bool_message_sent = send_slack_message(blocks)  # dojo
             if bool_message_sent:
                 unslacked_items.update(bool_alert_sent=True)
