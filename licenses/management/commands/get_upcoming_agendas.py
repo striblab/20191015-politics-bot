@@ -14,6 +14,7 @@ class Command(BaseCommand):
     api_endpoint_upcoming = 'https://lims.minneapolismn.gov/Home/UpcomingMeetings'
     api_endpoint_past = 'https://lims.minneapolismn.gov/Home/MarkedAgendas'
 
+    agenda_record_root_upcoming = 'https://lims.minneapolismn.gov/Agenda'
     agenda_record_root_past = 'https://lims.minneapolismn.gov/MarkedAgenda'
 
     COMMITTEE_NAMES = ['Economic Development & Regulatory Services Committee']
@@ -24,15 +25,15 @@ class Command(BaseCommand):
         # parser.add_argument('poll_ids', nargs='+', type=int)
         pass
 
-    def get_agenda_links(self):
+    def get_agenda_links(self, sked_endpoint, agenda_endpoint):
         agenda_results= []
-        agendas = json.loads(requests.get(self.api_endpoint_past).content)
+        agendas = json.loads(requests.get(sked_endpoint).content)
         # print(agendas)
         for a in agendas:
             commitee_name = a['CommitteeName']
             if commitee_name in self.COMMITTEE_NAMES:
                 if a['AgendaId'] != "0":  # Ignore if no agenda yet
-                    agenda_link = os.path.join(self.agenda_record_root_past, a['Abbreviation'], str(a['AgendaId']))
+                    agenda_link = os.path.join(agenda_endpoint, a['Abbreviation'], str(a['AgendaId']))
                     a.update({'agenda_link': agenda_link})
                     agenda_results.append(a)
         return agenda_results
@@ -44,12 +45,13 @@ class Command(BaseCommand):
         return input_str
 
 
-    def find_agenda_items(self, meeting_obj):
+    def find_agenda_items(self, meeting_obj, meeting_type='p'):
         agenda = requests.get(meeting_obj['agenda_link']).content
         soup = BeautifulSoup(agenda, "html.parser")
-
+        # print(soup)
         interesting_items = []
         subject_headings = soup.find_all("h4", class_="caption-subject")
+
         for heading in subject_headings:
             action_type = heading.text.strip()
 
@@ -75,7 +77,10 @@ class Command(BaseCommand):
                             for index, li in enumerate(list_items):
                                 item_description += '\n    {}. {}'.format(str(index+1), self.strip_line_breaks(li.text))
 
-                        action_taken = item.find('b').text.replace('Action Taken: ', '').strip()
+                        if meeting_type == 'past':
+                            action_taken = item.find('b').text.replace('Action Taken: ', '').strip()
+                        else:
+                            action_taken = ''
 
                         report_back = {
                             'item_title': item_title,
@@ -91,7 +96,7 @@ class Command(BaseCommand):
 
         return interesting_items
 
-    def load_item(self, meeting, item):
+    def load_item(self, meeting, item, meeting_type):
         # This is a small dataset, so update or create based on meeting link and item title
         obj, created = AgendaItem.objects.update_or_create(
             meeting_link=meeting['agenda_link'],
@@ -99,6 +104,7 @@ class Command(BaseCommand):
             defaults={
                 'committee_name': meeting['CommitteeName'],
                 'meeting_id': meeting['AgendaId'],
+                'meeting_type': meeting_type,
                 'item_link': item['item_link'],
                 'item_description': item['item_description'],
                 'action_type': item['action_type'],
@@ -107,13 +113,21 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        agendas = self.get_agenda_links()
-
         # # Feed it a manual agenda
-        # agendas = [
+        # upcoming_agendas = [
         #     {'agenda_link': 'https://lims.minneapolismn.gov/MarkedAgenda/EDRS/1188'}
         # ]
-        for a in agendas:
-            matching_items = self.find_agenda_items(a)
+
+        # Upcoming items ...
+        upcoming_agendas = self.get_agenda_links(self.api_endpoint_upcoming, self.agenda_record_root_upcoming)
+        for a in upcoming_agendas:
+            matching_items = self.find_agenda_items(a, 'u')
             for mi in matching_items:
-                self.load_item(a, mi)
+                self.load_item(a, mi, 'u')
+
+        # Items already acted on...
+        past_agendas = self.get_agenda_links(self.api_endpoint_past, self.agenda_record_root_past)
+        for a in past_agendas:
+            matching_items = self.find_agenda_items(a, 'p')
+            for mi in matching_items:
+                self.load_item(a, mi, 'p')

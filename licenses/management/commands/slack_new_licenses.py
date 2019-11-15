@@ -22,15 +22,20 @@ class Command(BaseCommand):
         i = item_instance.__dict__
         return '\n\n*<https://lims.minneapolismn.gov{item_link}|{item_title}>*\n{item_description}\n_{action_taken} ({action_type})_'.format(**i)
 
-    def handle(self, *args, **options):
-        unslacked_items = AgendaItem.objects.filter(bool_alert_sent=False)
+    def slack_unslacked(self, meeting_type):
+        unslacked_items = AgendaItem.objects.filter(bool_alert_sent=False, meeting_type=meeting_type)
+
+        meeting_type_str = ''
+        if meeting_type == 'u':
+            meeting_type_str = 'upcoming '
+
         if unslacked_items.count() > 0:
             blocks = []
             for committee_name in unslacked_items.values_list('committee_name', flat=True).distinct():
                 if unslacked_items.count() == 1:
-                    response_text = "You heard it here first: there's a new {} agenda item RE: food.".format(committee_name)
+                    response_text = "You heard it here first: there's a new {}{} agenda item RE: food.".format(meeting_type_str, committee_name)
                 else:
-                    response_text = "You heard it here first: there are {} new {} agenda items RE: food.".format(unslacked_items.count(), committee_name)
+                    response_text = "You heard it here first: there are {} new {}{} agenda items RE: food.".format(unslacked_items.count(), meeting_type_str, committee_name)
                 blocks.append(build_slack_mrkdwn_block(response_text))
 
                 for uc in unslacked_items:
@@ -41,3 +46,7 @@ class Command(BaseCommand):
             # bool_message_sent = send_slack_message(blocks)  # dojo
             if bool_message_sent:
                 unslacked_items.update(bool_alert_sent=True)
+
+    def handle(self, *args, **options):
+        self.slack_unslacked('u')
+        self.slack_unslacked('p')
